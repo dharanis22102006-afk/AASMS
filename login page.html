@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>AASMS Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #fff4e6;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      max-width: 400px;
+      width: 100%;
+      background: #fff;
+      padding: 24px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      border-top: 6px solid #ff6600;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #ff6600;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    input, select, button {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    button {
+      background: #ff6600;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #e65c00;
+    }
+    #status {
+      margin-top: 15px;
+      text-align: center;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>AASMS Login</h1>
+    <form id="loginForm">
+      <label>Email (must end with @ksrce.ac.in)</label>
+      <input type="email" id="email" required />
+
+      <label>Password</label>
+      <input type="password" id="password" required />
+
+      <label>Role</label>
+      <select id="role" required>
+        <option value="">-- Select Role --</option>
+        <option value="student">Student</option>
+        <option value="admin">Admin</option>
+      </select>
+
+      <button type="submit">Login</button>
+    </form>
+    <p id="status"></p>
+  </div>
+
+  <script>
+    // ✅ Firebase Config (get this from Firebase Console → Project Settings → General → Your apps)
+    const firebaseConfig = {
+      apiKey: "AIzaSyAFPAbtGH0AK-GscQlr7VK_EQTh1kyOkBA",
+  authDomain: "aasms-3a04e.firebaseapp.com",
+  projectId: "aasms-3a04e",
+  storageBucket: "aasms-3a04e.firebasestorage.app",
+  messagingSenderId: "649961994078",
+  appId: "1:649961994078:web:bda6a1272b5611cda3c1cf",
+  measurementId: "G-HM126XB7W3" // replace with actual App ID
+    };
+
+    // ✅ Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    console.log("✅ Firebase initialized");
+
+    const form = document.getElementById("loginForm");
+    const statusEl = document.getElementById("status");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const role = document.getElementById("role").value;
+
+      // ✅ Check email domain
+      if (!email.endsWith("@ksrce.ac.in")) {
+        statusEl.textContent = "❌ Only @ksrce.ac.in emails are allowed";
+        statusEl.style.color = "red";
+        return;
+      }
+
+      try {
+        // ✅ Login with Firebase
+        await auth.signInWithEmailAndPassword(email, password);
+
+        statusEl.textContent = "✅ Login successful! Redirecting...";
+        statusEl.style.color = "green";
+
+        // ✅ Redirect to role-based dashboard
+        let redirect = role === "student" ? "student-dashboard.html" : "admin-dashboard.html";
+
+        setTimeout(() => {
+          window.location.href = redirect;
+        }, 1500);
+
+      } catch (err) {
+        console.error("❌ Firebase Error:", err);
+        statusEl.textContent = "❌ Login failed: " + err.message;
+        statusEl.style.color = "red";
+      }
+    });
+  </script>
+</body>
+</html>
