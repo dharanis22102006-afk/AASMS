@@ -8,6 +8,7 @@
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
   <style>
     body {
@@ -84,22 +85,20 @@
   </div>
 
   <script>
-    // ✅ Firebase Config (get this from Firebase Console → Project Settings → General → Your apps)
+    // ✅ Firebase Config
     const firebaseConfig = {
-      apiKey: "AIzaSyAFPAbtGH0AK-GscQlr7VK_EQTh1kyOkBA",
-  authDomain: "aasms-3a04e.firebaseapp.com",
-  projectId: "aasms-3a04e",
-  storageBucket: "aasms-3a04e.firebasestorage.app",
-  messagingSenderId: "649961994078",
-  appId: "1:649961994078:web:bda6a1272b5611cda3c1cf",
-  measurementId: "G-HM126XB7W3" // replace with actual App ID
+      apiKey: "AIzaSyDHfo25nGy-evft1sa9hNzu6zhn1c_s9O8",
+      authDomain: "student-dashboard-aasms-f6d7a.firebaseapp.com",
+      projectId: "student-dashboard-aasms-f6d7a",
+      storageBucket: "student-dashboard-aasms-f6d7a.appspot.com",
+      messagingSenderId: "174315071918",
+      appId: "1:174315071918:web:YOUR_APP_ID"
     };
 
     // ✅ Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
-
-    console.log("✅ Firebase initialized");
+    const db = firebase.firestore();
 
     const form = document.getElementById("loginForm");
     const statusEl = document.getElementById("status");
@@ -119,18 +118,29 @@
       }
 
       try {
-        // ✅ Login with Firebase
-        await auth.signInWithEmailAndPassword(email, password);
+        // ✅ Sign in user
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        const user = userCredential.user;
 
+        // ✅ Check if user already exists in Firestore
+        const userRef = db.collection("users").doc(user.uid);
+        const doc = await userRef.get();
+
+        if (!doc.exists) {
+          // 🔥 Create new document with role
+          await userRef.set({
+            email: user.email,
+            role: role
+          });
+          console.log("✅ User role saved in Firestore");
+        }
+
+        // ✅ Redirect based on role
+        let redirect = role === "student" ? "dashborad.html" : "admin-dashboard.html";
         statusEl.textContent = "✅ Login successful! Redirecting...";
         statusEl.style.color = "green";
 
-        // ✅ Redirect to role-based dashboard
-        let redirect = role === "student" ? "student-dashboard.html" : "admin-dashboard.html";
-
-        setTimeout(() => {
-          window.location.href = redirect;
-        }, 1500);
+        setTimeout(() => { window.location.href = redirect; }, 1500);
 
       } catch (err) {
         console.error("❌ Firebase Error:", err);
