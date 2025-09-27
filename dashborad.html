@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📘 Student Dashboard</title>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+
+  <!-- QR Scanner -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+  <style>
+    body { font-family: Arial, sans-serif; margin:0; background:#fffaf5; }
+    header { background:#ff6600; color:white; text-align:center; padding:0.8rem; font-size:1.2rem; position:fixed; top:0; width:100%; z-index:10; display:flex; justify-content:space-between; align-items:center; }
+    header button { background:#fff; color:#ff6600; border:none; border-radius:5px; padding:5px 10px; cursor:pointer; font-weight:bold; }
+    header button:hover { background:#ffe6d9; }
+    main { padding:70px 10px 80px; }
+
+    /* Tabs */
+    .tab { display:none; }
+    .tab.active { display:block; }
+
+    /* Bottom Navigation */
+    .tab-nav {
+      display:flex; justify-content:space-around; align-items:center;
+      background:#fff; border-top:1px solid #ccc;
+      position:fixed; bottom:0; left:0; right:0;
+      height:60px; z-index:10;
+    }
+    .tab-nav button {
+      flex:1; padding:8px; border:none; background:none;
+      font-size:0.9rem; font-weight:bold; color:#555;
+      display:flex; flex-direction:column; align-items:center; gap:3px;
+    }
+    .tab-nav button.active { color:#ff6600; }
+
+    /* Scanner */
+    #reader { width:100%; max-width:350px; height:280px; margin:15px auto; border:2px solid #ff6600; border-radius:10px; }
+    #feedback { text-align:center; margin:10px; font-weight:bold; }
+
+    /* Tables */
+    table { width:100%; border-collapse:collapse; font-size:0.85rem; margin-top:10px; }
+    th, td { border:1px solid #ddd; padding:6px; text-align:center; }
+    th { background:#ff6600; color:white; font-size:0.9rem; }
+    td.present { background:#c8e6c9; }
+    td.late { background:#ffe0b2; }
+    td.absent { background:#ffcdd2; }
+    td.notmarked { background:#f5f5f5; }
+    .table-container { overflow-x:auto; }
+  </style>
+</head>
+<body>
+  <header id="header">
+    📘 Student Dashboard
+    <button onclick="logout()">Logout</button> <!-- 🔹 Logout Button -->
+  </header>
+
+  <main id="dashboard">
+    <!-- Scanner Tab -->
+    <div id="scannerTab" class="tab active">
+      <h3 style="text-align:center;">Scan QR to Mark Attendance</h3>
+      <div id="reader"></div>
+      <div id="feedback">Waiting for scan...</div>
+    </div>
+
+    <!-- Attendance Tab -->
+    <div id="attendanceTab" class="tab">
+      <h3 style="text-align:center;">Today’s Attendance</h3>
+      <div class="table-container">
+        <table id="attendanceTable">
+          <thead>
+            <tr><th>Period</th><th>Time</th><th>Type</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>9:00 – 9:50</td><td>-</td><td class="notmarked">Not Marked</td></tr>
+            <tr><td>2</td><td>9:50 – 10:40</td><td>-</td><td class="notmarked">Not Marked</td></tr>
+            <tr><td>3</td><td>10:55 – 11:45</td><td>-</td><td class="notmarked">Not Marked</td></tr>
+            <tr><td>4</td><td>11:45 – 12:35</td><td>-</td><td class="notmarked">Not Marked</td></tr>
+            <tr><td>5</td><td>1:30 – 2:20</td><td>-</td><td class="notmarked">Not Marked</td></tr>
+            <tr><td>6</td><td>2:20 – 3:10</td><td>-</td><td class="notmarked">Not Marked</td></tr>
+            <tr><td>7</td><td>3:10 – 4:00</td><td>-</td><td class="notmarked">Not Marked</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Timetable Tab -->
+    <div id="timetableTab" class="tab">
+      <h3 style="text-align:center;">Timetable</h3>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr><th>Period</th><th>Time</th><th>Subject</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>9:00 – 9:50</td><td>Maths</td></tr>
+            <tr><td>2</td><td>9:50 – 10:40</td><td>English</td></tr>
+            <tr><td>3</td><td>10:55 – 11:45</td><td>Science</td></tr>
+            <tr><td>4</td><td>11:45 – 12:35</td><td>History</td></tr>
+            <tr><td>5</td><td>1:30 – 2:20</td><td>Skill Lab</td></tr>
+            <tr><td>6</td><td>2:20 – 3:10</td><td>Computer</td></tr>
+            <tr><td>7</td><td>3:10 – 4:00</td><td>Sports</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <div class="tab-nav">
+    <button onclick="openTab('scannerTab', this)" class="active">📷<span>Scanner</span></button>
+    <button onclick="openTab('attendanceTab', this)">📊<span>Attendance</span></button>
+    <button onclick="openTab('timetableTab', this)">📅<span>Timetable</span></button>
+  </div>
+
+ <script>
+  // ================= Firebase Config ==================
+  const firebaseConfig = {
+    apiKey: "AIzaSyDHfo25nGy-evft1sa9hNzu6zhn1c_s9O8",
+    authDomain: "student-dashboard-aasms-f6d7a.firebaseapp.com",
+    projectId: "student-dashboard-aasms-f6d7a",
+    storageBucket: "student-dashboard-aasms-f6d7a.firebasestorage.app",
+    messagingSenderId: "174315071918",
+    appId: "1:174315071918:web:f095c93ae7e6ff19c8803f",
+    measurementId: "G-ZN956M1MDL"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const auth = firebase.auth();
+
+  // 🔹 Login Check
+  auth.onAuthStateChanged(user => {
+    if (!user) {
+      window.location.href = "index.html"; // Redirect if not logged in
+    } else {
+      initDashboard(user.uid);
+    }
+  });
+
+  // 🔹 Logout function
+  function logout() {
+    auth.signOut()
+      .then(() => {
+        window.location.href = "index.html"; // Redirect to login page after logout
+      })
+      .catch(err => {
+        console.error("Logout error:", err);
+        alert("Error logging out. Please try again.");
+      });
+  }
+
+  // ================= Tab Switching ==================
+  function openTab(tabId, btn) {
+    document.querySelectorAll(".tab").forEach(tab => tab.classList.remove("active"));
+    document.querySelectorAll(".tab-nav button").forEach(b => b.classList.remove("active"));
+    document.getElementById(tabId).classList.add("active");
+    btn.classList.add("active");
+  }
+
+  // ================= Period & Attendance ==================
+  const periods = [
+    { start: "09:00", end: "09:50" },
+    { start: "09:50", end: "10:40" },
+    { start: "10:55", end: "11:45" },
+    { start: "11:45", end: "12:35" },
+    { start: "13:30", end: "14:20" },
+    { start: "14:20", end: "15:10" },
+    { start: "15:10", end: "16:00" }
+  ];
+
+  function getPeriodIndex(now) {
+    const current = now.getHours()*60 + now.getMinutes();
+    for (let i=0;i<periods.length;i++) {
+      const [sh, sm] = periods[i].start.split(":").map(Number);
+      const [eh, em] = periods[i].end.split(":").map(Number);
+      const startMin = sh*60+sm, endMin=eh*60+em;
+      if (current>=startMin && current<=endMin) return i;
+    }
+    return -1;
+  }
+
+  function getStatus(periodIndex, now) {
+    const [sh, sm] = periods[periodIndex].start.split(":").map(Number);
+    const startTime = new Date();
+    startTime.setHours(sh, sm, 0, 0);
+    const diffMinutes = (now - startTime)/60000;
+    if (diffMinutes <= 10) return "Present";
+    if (diffMinutes > 10 && diffMinutes <= 50) return "Late";
+    return "Absent";
+  }
+
+  async function markAttendance(studentId, periodIndex, status, now, type) {
+    const today = new Date().toISOString().split("T")[0];
+    const ref = db.collection("attendance").doc(studentId).collection(today).doc(`period${periodIndex+1}`);
+    await ref.set({
+      date: today,
+      period: periodIndex+1,
+      type: type,
+      status: status,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    const row = document.querySelector(`#attendanceTable tbody tr:nth-child(${periodIndex+1})`);
+    row.cells[2].textContent = type;
+    row.cells[3].textContent = status;
+    row.cells[3].className = status.toLowerCase();
+    document.getElementById("feedback").textContent = `✅ ${status} marked for ${type} in Period ${periodIndex+1}`;
+  }
+
+  // ================= Initialize Dashboard ==================
+  function initDashboard(studentId) {
+    let lastScanTime = 0;
+
+    function onScanSuccess(decodedText) {
+      const now = new Date();
+      const currentTime = now.getTime();
+      if (currentTime - lastScanTime < 5000) return;
+      lastScanTime = currentTime;
+
+      const periodIndex = getPeriodIndex(now);
+      if (periodIndex === -1) {
+        document.getElementById("feedback").textContent = "❌ Not within class time!";
+        return;
+      }
+
+      const text = decodedText.trim().toUpperCase().replace(/\s+/g,"");
+      if (text === "NORMALCLASSROOM") {
+        markAttendance(studentId, periodIndex, getStatus(periodIndex, now), now, "Normal");
+      } else if (text === "SKILLCLASSROOM") {
+        markAttendance(studentId, periodIndex, getStatus(periodIndex, now), now, "Skill");
+      } else {
+        document.getElementById("feedback").textContent = "❌ Invalid QR Code!";
+      }
+    }
+
+    function onScanFailure(err){}
+
+    const html5QrCode = new Html5Qrcode("reader");
+    Html5Qrcode.getCameras().then(cameras => {
+      if (cameras && cameras.length) {
+        const cameraId = cameras.length > 1 ? cameras[1].id : cameras[0].id;
+        html5QrCode.start(
+          cameraId,
+          { fps:10, qrbox:{width:250,height:250} },
+          onScanSuccess,
+          onScanFailure
+        ).catch(err => {
+          document.getElementById("feedback").textContent = "❌ Camera error: " + err;
+        });
+      } else {
+        document.getElementById("feedback").textContent = "❌ No cameras found.";
+      }
+    }).catch(err => {
+      document.getElementById("feedback").textContent = "❌ Camera error: " + err;
+    });
+  }
+</script>
+
+</body>
+</html>
