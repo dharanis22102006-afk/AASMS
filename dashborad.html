@@ -39,7 +39,16 @@
     .tab-nav button.active { color:#ff6600; }
 
     /* Scanner */
-    #reader { width:100%; max-width:350px; height:280px; margin:15px auto; border:2px solid #ff6600; border-radius:10px; }
+    #reader {
+  width: 90%;           /* almost full width on mobile */
+  max-width: 400px;     /* optional max width for larger screens */
+  height: 50vw;         /* height relative to viewport width, keeps it roughly square */
+  max-height: 400px;    /* optional max height */
+  margin: 15px auto;
+  border: 2px solid #ff6600;
+  border-radius: 10px;
+}
+
     #feedback { text-align:center; margin:10px; font-weight:bold; }
 
     /* Tables */
@@ -261,3 +270,4 @@
 
 </body>
 </html>
+
